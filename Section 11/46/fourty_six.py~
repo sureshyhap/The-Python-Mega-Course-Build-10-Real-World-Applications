@@ -1,0 +1,3 @@
+def num_char(character, filepath):
+    with open(filepath) as infile:
+        
