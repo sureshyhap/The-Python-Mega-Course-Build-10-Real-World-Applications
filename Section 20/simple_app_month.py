@@ -1,4 +1,10 @@
 import justpy as jp
+import pandas
+from datetime import datetime
+from pytz import utc
+data = pandas.read_csv("reviews.csv", parse_dates=["Timestamp"])
+data["Month"] = data["Timestamp"].dt.strftime("%Y-%m")
+month_average = data.groupby(["Month"]).mean()
 
 chart_def = """
 {
@@ -64,11 +70,26 @@ chart_def = """
 def app():
     wp = jp.QuasarPage()
     h3z = jp.QDiv(a=wp, text="Analysis of Course Reviews", classes="text-h3 text-center")
-    p1 = jp.QDiv(a=wp, text="The graphs represent review analysis")
+#    p1 = jp.QDiv(a=wp, text="The graphs represent review analysis")
     hc = jp.HighCharts(a=wp, options=chart_def)
-    hc.options.title.text = "Average Rating by Day"
+    hc.options.title.text = "Average Rating by Month"
     hc.options.chart.inverted = False;
+    hc.options.subtitle.text = "The graphs represent review analysis"
+    hc.options.xAxis.labels.format = "{value}"
+    x = month_average.index
+    y = month_average["Rating"]
+    hc.options.xAxis.categories = list(x)
+    hc.options.series[0].data = list(y)
+    hc.options.xAxis.title.text = "Month"
+    hc.options.yAxis.title.text = "Average Rating"
+    hc.options.series[0].name = "Average Rating"
+    hc.options.tooltip.pointFormat = "{point.x}: {point.y}"
+    """
+    x = [3, 6, 8]
+    y = [4, 7, 9]
+    hc.options.series[0].data = list(zip(x, y))
     hc.options.series[0].data = [[3, 4], [6, 7], [8, 9]]
+    """
     return wp
 
 jp.justpy(app)
