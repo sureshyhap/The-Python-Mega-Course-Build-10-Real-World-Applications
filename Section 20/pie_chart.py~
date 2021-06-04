@@ -1,0 +1,5 @@
+from datetime import datetime
+import pandas
+from pytz import utc
+
+data = pandas.read_csv("reviews.csv", parse_dates=["Timestamp"])

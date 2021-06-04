@@ -1,0 +1,94 @@
+import justpy as jp
+import pandas
+from datetime import datetime
+from pytz import utc
+
+data = pandas.read_csv("reviews.csv", parse_dates=["Timestamp"])
+data["Weekday"] = data["Timestamp"].dt.strftime("%A")
+data["Daynumber"] = data["Timestamp"].dt.strftime("%w")
+happiness = data.groupby(["Weekday", "Daynumber"]).mean()
+happiness = happiness.sort_values("Daynumber")
+
+contents = """
+{
+    chart: {
+        type: 'spline'
+    },
+    title: {
+        text: 'Average fruit consumption during one week'
+    },
+    legend: {
+        layout: 'vertical',
+        align: 'left',
+        verticalAlign: 'top',
+        x: 150,
+        y: 100,
+        floating: true,
+        borderWidth: 1,
+        backgroundColor:
+            '#FFFFFF'
+    },
+    xAxis: {
+        categories: [
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday',
+            'Sunday'
+        ],
+        plotBands: [{ // visualize the weekend
+            from: 4.5,
+            to: 6.5,
+            color: 'rgba(68, 170, 213, .2)'
+        }]
+    },
+    yAxis: {
+        title: {
+            text: 'Fruit units'
+        }
+    },
+    tooltip: {
+        shared: true,
+        valueSuffix: ''
+    },
+    credits: {
+        enabled: false
+    },
+    plotOptions: {
+        areaspline: {
+            fillOpacity: 0.5
+        }
+    },
+    series: [{
+        name: 'John',
+        data: [3, 4, 3, 5, 4, 10, 12]
+    }, {
+        name: 'Jane',
+        data: [1, 3, 4, 3, 3, 5, 4]
+    }]
+}
+"""
+def app():
+    wp = jp.QuasarPage()
+    h3 = jp.QDiv(a=wp, text="Happiness over the week", classes="text-h3 text-center")
+    hc = jp.HighCharts(a=wp, options=contents)
+    hc.options.xAxis.categories = list(happiness.index.get_level_values(0))
+    """
+    hc.options.series = []
+    for i in range(len(happiness["Rating"])):
+        hc.options.series.append({})
+        hc.options.series[i]["name"] = happiness.columns[i]
+        hc.options.series[i]["data"] = list(happiness["Rating"].iloc[:, i])
+    hc.options.legend.floating = False
+"""
+    del hc.options.series[1]
+    for i in range(len(happiness.index.get_level_values(0))):
+        hc.options.series[i].name = happiness.index.get_level_values(0)[i]
+    hc.options.series[0].data = list(happiness["Rating"])
+    hc.options.yAxis.title.text = "Rating"
+    hc.options.title = "Happiness versus Day of the Week"
+    return wp
+
+jp.justpy(app)
